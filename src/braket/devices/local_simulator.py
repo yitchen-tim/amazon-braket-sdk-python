@@ -152,6 +152,11 @@ class LocalSimulator(Device):
         *args,
         **kwargs,
     ):
+        # qubit mapping to contiguous qubit set
+        if circuit.qubit_count <= max(circuit.qubits):
+            target_mapping = {q:i for i,q in enumerate(circuit.qubits)}
+            circuit = Circuit().add_circuit(circuit, target_mapping=target_mapping)
+
         simulator = self._delegate
         if DeviceActionType.OPENQASM in simulator.properties.action:
             validate_circuit_and_shots(circuit, shots)
