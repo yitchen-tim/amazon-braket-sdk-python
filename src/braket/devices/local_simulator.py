@@ -45,7 +45,7 @@ class LocalSimulator(Device):
     results using constructs from the SDK rather than Braket IR.
     """
 
-    def __init__(self, backend: Union[str, BraketSimulator] = "default"):
+    def __init__(self, backend: Union[str, BraketSimulator] = "default", noise_model=None):
         """
         Args:
             backend (Union[str, BraketSimulator]): The name of the simulator backend or
@@ -58,6 +58,7 @@ class LocalSimulator(Device):
             status="AVAILABLE",
         )
         self._delegate = delegate
+        self.noise_model = noise_model
 
     def run(
         self,
@@ -152,6 +153,9 @@ class LocalSimulator(Device):
         *args,
         **kwargs,
     ):
+        if self.noise_model:
+            circuit = self.noise_model.apply(circuit)
+
         # qubit mapping to contiguous qubit set
         if circuit.qubit_count <= max(circuit.qubits):
             target_mapping = {q:i for i,q in enumerate(circuit.qubits)}
