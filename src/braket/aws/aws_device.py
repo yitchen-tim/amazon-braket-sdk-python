@@ -244,7 +244,7 @@ class AwsDevice(Device):
             `braket.aws.aws_quantum_task_batch.AwsQuantumTaskBatch`
         """
         return AwsQuantumTaskBatch(
-            AwsSession.copy_session(self._aws_session, max_connections=max_connections),
+            self._aws_session,
             self._arn,
             task_specifications,
             s3_destination_folder
