@@ -24,6 +24,7 @@ from typing import (
     Mapping,
     NamedTuple,
     OrderedDict,
+    Union,
     ValuesView,
 )
 
@@ -163,17 +164,21 @@ class Moments(Mapping[MomentsKey, Instruction]):
 
         return time_slices
 
-    def add(self, instructions: Iterable[Instruction], noise_index: int = 0) -> None:
+    def add(
+        self, instructions: Union[Iterable[Instruction], Instruction], noise_index: int = 0
+    ) -> None:
         """
-        Add instructions to self.
+        Add one or more instructions to self.
 
         Args:
-            instructions (Iterable[Instruction]): Instructions to add to self. The instruction is
-                added to the max time slice in which the instruction fits.
+            instructions (Union[Iterable[Instruction], Instruction]): Instructions to add to self.
+                The instruction is added to the max time slice in which the instruction fits.
             noise_index (int): the number of noise channels at the same moment. For gates, this
                 is the number of gate_noise channels associated with that gate. For all other noise
                 types, noise_index starts from 0; but for gate noise, it starts from 1.
         """
+        if isinstance(instructions, Instruction):
+            instructions = [instructions]
         for instruction in instructions:
             self._add(instruction, noise_index)
 
@@ -187,12 +192,10 @@ class Moments(Mapping[MomentsKey, Instruction]):
         elif isinstance(operator, Noise):
             self.add_noise(instruction)
         else:
-            qubit_range = instruction.target
+            qubit_range = instruction.target.union(instruction.control)
             time = self._update_qubit_times(qubit_range)
-            self._moments[
-                MomentsKey(time, instruction.target, MomentType.GATE, noise_index)
-            ] = instruction
-            self._qubits.update(instruction.target)
+            self._moments[MomentsKey(time, qubit_range, MomentType.GATE, noise_index)] = instruction
+            self._qubits.update(qubit_range)
             self._depth = max(self._depth, time + 1)
 
     def _update_qubit_times(self, qubits: QubitSet) -> int:
