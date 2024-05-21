@@ -245,7 +245,12 @@ class NoiseModel:
         instructions = self.get_instructions_by_type()
         new_circuit = NoiseModel._apply_gate_noise(circuit, instructions.gate_noise)
         new_circuit = NoiseModel._apply_init_noise(new_circuit, instructions.initialization_noise)
-        return NoiseModel._apply_readout_noise(new_circuit, instructions.readout_noise)
+        new_circuit = NoiseModel._apply_readout_noise(new_circuit, instructions.readout_noise)
+
+        for q in new_circuit.qubits:
+           new_circuit.add(Instruction(instructions.readout_noise[0].noise, target = q))
+
+        return new_circuit
 
     def to_dict(self) -> dict:
         """Converts this object to a dictionary."""
